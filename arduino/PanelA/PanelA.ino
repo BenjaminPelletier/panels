@@ -2,7 +2,6 @@
 #include <SwitchArray.h>
 #include <LightArray.h>
 #include <Slider.h>
-#include <LineComm.h>
 #include <Servo.h>
 
 const int SFQ_COLOR_PINS[] = {45, 44, 43};
@@ -35,12 +34,11 @@ const int APP_SERIAL_BUFFER_LENGTH = 5*12*2;
 char msg[APP_SERIAL_BUFFER_LENGTH];
 int msgOffset = 0;
 bool lastCharWasCR = false;
+#define AppSerial Serial
 
 const int N_ANALOG_CHANNELS = 1;
 bool pushAnalog[N_ANALOG_CHANNELS] = {false};
 bool analogOnce[N_ANALOG_CHANNELS] = {false};
-
-#define AppSerial Serial
 
 void animate() {
   for (int i=0; i<LEDS_NLEDS; i++) {

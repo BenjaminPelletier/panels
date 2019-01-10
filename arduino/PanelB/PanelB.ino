@@ -1,6 +1,5 @@
 #include <SwitchArray.h>
 #include <LightArray.h>
-#include <LineComm.h>
 
 const byte SWA_NSWITCHES = 19;
 const int SWA_PINS[] = {53, 52, 51, 50, 49, 48, 45, 44, 42, 47, 43, 41, 46, 40, 38, 12, 11, 13, 10};
@@ -12,51 +11,43 @@ const int LEDS_PINS[] = {34, 33, 22, 30, 24, 23, 32, 25, 26, 35, 36, 37, 27, 28,
 const int LEDS_ON[] = {HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH, HIGH};
 LightArray leds = LightArray(LEDS_NLEDS, LEDS_PINS, LEDS_ON);
 
-const long BLUETOOTH_BAUDRATE = 38400;
-const int BLUETOOTH_BUFFER_LENGTH = 5*12*2;
-char msg[BLUETOOTH_BUFFER_LENGTH];
+const long APP_SERIAL_BAUDRATE = 115200;
+const int APP_SERIAL_BUFFER_LENGTH = 5*12*2;
+char msg[APP_SERIAL_BUFFER_LENGTH];
 int msgOffset = 0;
 bool lastCharWasCR = false;
+#define AppSerial Serial
 
-int randomSwitches[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+void animate() {
+  for (int i=0; i<LEDS_NLEDS; i++) {
+    leds.SetLight(i, true);
+    delay(30);
+  }
+  for (int i=0; i<LEDS_NLEDS; i++) {
+    leds.SetLight(i, false);
+    delay(30);
+  }
+}
+
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("PC serial started");
-
-  //Serial1.begin(BLUETOOTH_BAUDRATE);
+  AppSerial.begin(APP_SERIAL_BAUDRATE);
   
   swa.Init();
   leds.Init();
 
-  randomSeed(analogRead(A1));
-  for (int i=0; i<16; i++)
-    randomSwitches[i] = random(32000) + 20;
-  for (int i=0; i<16; i++) {
-    int highestValue = 0;
-    int highestIndex;
-    for (int j=0; j<16; j++) {
-      int r = randomSwitches[j];
-      if (r > highestValue) {
-        highestValue = r;
-        highestIndex = j;
-      }
-    }
-    randomSwitches[highestIndex] = i;
-  }
-  for (int i=0; i<16; i++) {
-    Serial.println(randomSwitches[i]);
-  }
+  animate();
+
+  AppSerial.print("*READY\n");
 }
 
 void loop() {
   swa.UpdateState();
 
-  // Read any queued serial data from the Bluetooth interface
+  // Read any queued serial data from the application interface
   bool msgReady = false;
-  while (Serial.available() > 0) {
-    char c = Serial.read();
-    //Serial.write(c);
+  while (AppSerial.available() > 0) {
+    char c = AppSerial.read();
     
     if (lastCharWasCR && c == '\n') {
       lastCharWasCR = false;
@@ -75,9 +66,8 @@ void loop() {
       break;
       
     msgOffset++;
-    if (msgOffset >= BLUETOOTH_BUFFER_LENGTH) {
-      //Serial.println("*ERR Buffer overflow (line too long)");
-      Serial.println("*ERR Buffer overflow (line too long)");
+    if (msgOffset >= APP_SERIAL_BUFFER_LENGTH) {
+      AppSerial.println("*ERR Buffer overflow (line too long)");
       msgOffset = 0;
       break;
     }
@@ -143,19 +133,25 @@ void loop() {
     // *RID: Request the panel ID
     } else if (msg[0] == '*' && msg[1] == 'R' && msg[2] == 'I' && msg[3] == 'D') {
       processed = true;
-      Serial.print("*PIDPanelB\n");
+      AppSerial.print("*PIDPanelB\n");
+
+    // *ANI: Play startup animation sequence
+    } else if (msg[0] == '*' && msg[1] == 'A' && msg[2] == 'N' && msg[3] == 'I') {
+      processed = true;
+      animate();
+
+    // *READY: Echo back that device is ready
+    } else if (msg[0] == '*' && msg[1] == 'R' && msg[2] == 'E' && msg[3] == 'A' && msg[4] == 'D' && msg[5] == 'Y') {
+      processed = true;
+      AppSerial.print("*READY\n");
     }
 
     // Send error message if incoming message not processed
     if (!processed) {
-      //Serial.print("*ERR Could not parse '");
-      //Serial.print(msg);
-      //Serial.write('\'');
-      //Serial.write('*');
-      Serial.print("*ERR Could not parse '");
-      Serial.print(msg);
-      Serial.write('\'');
-      Serial.write('\n');
+      AppSerial.print("*ERR Could not parse '");
+      AppSerial.print(msg);
+      AppSerial.write('\'');
+      AppSerial.write('\n');
     }
   }
 
@@ -187,22 +183,8 @@ void loop() {
       }
       msg[3] = u;
       msg[4] = '\0';
-      Serial.print(msg);
-      Serial.write('\n');
-
-      int ir = i >= leds.nLights ? leds.nLights - 1 : i;
-      int rs = 0;
-      for (int r=0; r < leds.nLights; r++) {
-        if (ir == randomSwitches[r]) {
-          rs = randomSwitches[(r+1)%16];
-          break;
-        }
-      }
-      if (u == SwitchArray::BUTTON_DOWN) {
-        leds.SetLight(rs, true);
-      } else if (u == SwitchArray::BUTTON_UP) {
-        leds.SetLight(rs, false);
-      }
+      AppSerial.print(msg);
+      AppSerial.write('\n');
     }
   }
 
