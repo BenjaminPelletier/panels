@@ -5,7 +5,7 @@ import time
 
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
 class Colors:
@@ -46,6 +46,7 @@ class Panel(object):
 
         logger.info("Initializing switches")
         for switch in self.SWITCHES:
+            print(switch)
             self.read_switch(switch)
         logger.info("Initializing analogs")
         for analog in self.ANALOGS:
@@ -187,3 +188,8 @@ class PanelA(Panel):
     COLORED_LEDS = {'Q0', 'Q1', 'Q2', 'Q3'}
     ANALOGS = {'0'}
     SERVOS = {'0'}
+
+
+class PanelB(Panel):
+    SWITCHES = {'LR', 'LY', 'LG', 'RR', 'RY', 'RG', 'JU', 'JR', 'JD', 'JL', '00', '01', '02', '10', '11', '12', '20', '21', '22'}
+    BINARY_INDICATORS = {'LR', 'LY', 'LG', 'RR', 'RY', 'RG', 'JC', '00', '01', '02', '10', '11', '12', '20', '21', '22'}

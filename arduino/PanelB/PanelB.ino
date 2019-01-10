@@ -105,8 +105,9 @@ void loop() {
     //  a = group (see Sabc)
     //  b = index in group (see Sabc)
     } else if (msg[0] == 'Q' && msg[1] == 'S') {
+      processed = true;
       if (msg[2] >= '0' && msg[2] <= '2' && msg[3] >= '0' && msg[3] <= '2')
-        swa.ForceUpdate(3*(msg[1]-'0') + (msg[2]-'0'));
+        swa.ForceUpdate(3*(msg[2]-'0') + (msg[3]-'0'));
       else if (msg[2] == 'L' && msg[3] == 'R')
         swa.ForceUpdate(9);
       else if (msg[2] == 'L' && msg[3] == 'Y')
