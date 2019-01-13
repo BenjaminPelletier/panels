@@ -22,7 +22,7 @@ RED_BOOST = 40
 RED_RAMP = 0.8
 RED_DWELL = 0.4
 GREEN_MIN = 60
-GREEN_MAX = 85
+GREEN_MAX = 90
 GREEN_RAMP = 2
 GREEN_DWELL = 0.5
 
@@ -59,7 +59,8 @@ class SystemState(object):
         if all(self.blue_active.values()):
             self.blue_active[BLUE_SWITCHES[random.randint(0, len(self.blue_active) - 1)]] = False
         for s in BLUE_SWITCHES:
-            self.panel.set_indicator(s, not self.blue_active[s])
+            # self.panel.set_indicator(s, not self.blue_active[s])
+            self.panel.set_indicator(s, False)
 
     def switches_changed(self, changed_switches):
         for switch in changed_switches:
@@ -91,7 +92,7 @@ class SystemState(object):
             if 'S1' in changed_switches and panel.get_switch('S1'):
                 # Green launch button pressed
                 peak = GREEN_MIN + self.read_slider() * (GREEN_MAX - GREEN_MIN)
-                self.launch('S1', 2, peak, GREEN_DWELL)
+                self.launch('S1', GREEN_RAMP, peak, GREEN_DWELL)
                 self.reset()
         else:
             self.green_blinker.stop()
@@ -102,7 +103,8 @@ class SystemState(object):
         return min(max(v, 0), 1)
 
     def boost(self):
-        return all(self.blue_active) and all(not self.panel.get_switch(s) for s in BLUE_SWITCHES)
+        #return all(self.blue_active) and all(not self.panel.get_switch(s) for s in BLUE_SWITCHES)
+        return all(not self.panel.get_switch(s) for s in BLUE_SWITCHES)
 
     def launch(self, launch_button, ramp, peak, hold):
         for s in self.panel.BINARY_INDICATORS:
