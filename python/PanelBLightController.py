@@ -65,10 +65,10 @@ class SystemState(object):
     def switch_changed(self, switch, value):
         if switch == JOY_UP:
             self.set_auto_mode(False)
-            self.tilt.scroll_up(value)
+            self.tilt.scroll_down(value)
         elif switch == JOY_DOWN:
             self.set_auto_mode(False)
-            self.tilt.scroll_down(value)
+            self.tilt.scroll_up(value)
         elif switch == JOY_RIGHT:
             self.set_auto_mode(False)
             self.pan.scroll_up(value)
@@ -143,9 +143,9 @@ class SystemState(object):
 
 
 logger.info("Initializing panel connection")
-panel = PanelB('/dev/ttyUSB1')
+panel = PanelB('/dev/ttyUSB0')
 logger.info("Initializing DMX server connection")
-dmx = DmxClient('http://10.0.0.2:8080')
+dmx = DmxClient('http://192.168.1.79:8080')
 dmx.start()
 
 system = SystemState(panel, dmx)
